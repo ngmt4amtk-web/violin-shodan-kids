@@ -1,6 +1,6 @@
 // 1回の演奏（曲の1つの版）の進み方。画面にもマイクにも触れない。
 export const SUCCESS_MS = 850;      // 正解の演出が終わるまで
-export const ERROR_WAIT_MS = 4000;  // 外れたあと、弾き直しを待ってから次へ進むまで
+export const ERROR_WAIT_MS = 7000;  // 外れたあと、弾き直しを待ってから次へ進むまで
 
 export class PlaySession {
   constructor(song) {

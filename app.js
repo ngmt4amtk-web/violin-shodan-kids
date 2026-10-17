@@ -1,9 +1,9 @@
-import {STRINGS, stringById, SONGS, availableHomes, buildSong, candidatePool, fingerOffsets, gluedPairs, midiToHz, allEditions, noteFor} from './shapes.mjs?v=20261017d';
-import {TOL, PICKUP, detect, judgePitch, HoldTracker, Rearm} from './engine.mjs?v=20261017d';
-import {PlaySession} from './session.mjs?v=20261017d';
-import {buildTimeline, stateAt, toneWindows} from './longtone.mjs?v=20261017d';
-import {Sound} from './audio.mjs?v=20261017d';
-import * as store from './rewards.mjs?v=20261017d';
+import {STRINGS, stringById, SONGS, availableHomes, buildSong, candidatePool, fingerOffsets, gluedPairs, midiToHz, allEditions, noteFor} from './shapes.mjs?v=20261017e';
+import {TOL, PICKUP, detect, judgePitch, HoldTracker, Rearm} from './engine.mjs?v=20261017e';
+import {PlaySession} from './session.mjs?v=20261017e';
+import {buildTimeline, stateAt, toneWindows} from './longtone.mjs?v=20261017e';
+import {Sound} from './audio.mjs?v=20261017e';
+import * as store from './rewards.mjs?v=20261017e';
 
 const $ = id => document.getElementById(id);
 const qsa = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -25,6 +25,15 @@ const persist = () => store.save(safeStorage(), S);
 sound.setVolume(S.volume / 100);
 
 let PK = {kind: 'song', songId: 'mary', home: 'A', part: 'all'};
+let wake = null, stickerTimer = 0;
+async function holdScreen() {
+  try {
+    if (!navigator.wakeLock || document.visibilityState !== 'visible' || wake) return;
+    wake = await navigator.wakeLock.request('screen');
+    wake.addEventListener('release', () => { wake = null; });
+  } catch { wake = null; }
+}
+function releaseScreen() { try { if (wake) wake.release(); } catch {} wake = null; }
 let P = null, L = null, mic = null, ticket = 0, testReading = {f: -1, conf: 0, rms: 0};
 
 // ---------- 画面 ----------
@@ -175,7 +184,7 @@ function readPitch() {
 // ---------- 曲をひく ----------
 const stageOf = n => Math.min(4, n.pos % 4 + 1);
 function startSong() {
-  stopAll();
+  stopAll(); holdScreen();
   const song = buildSong(PK.songId, PK.home, PK.part);
   P = {song, session: new PlaySession(song), tracker: new HoldTracker(S.tol, PICKUP[S.pickup].minConf), rearm: new Rearm(), running: false, useMic: false, mutedUntil: 0, raf: 0, id: ++ticket, lastF: 440};
   show('play');
@@ -184,10 +193,11 @@ function startSong() {
 }
 async function beginPlay(fresh) {
   const id = P.id;
+  P.starting = true;
   setText($('pauseBtn'), 'やすむ');
-  if (TEST) { P.useMic = true; setTapMode(false); P.running = true; setText($('status'), 'テスト（マイクなし）'); loop(); return; }
+  if (TEST) { P.useMic = true; setTapMode(false); P.starting = false; P.running = true; setText($('status'), 'テスト（マイクなし）'); loop(); return; }
   sound.ensure();    // ボタンを押した直後に音を使えるようにする（iPhone）
-  if (!S.mic) { P.useMic = false; setTapMode(true); P.running = true; loop(); return; }
+  if (!S.mic) { P.useMic = false; setTapMode(true); P.starting = false; P.running = true; loop(); return; }
   setText($('status'), 'マイクを じゅんびしています');
   try {
     const m = await openMic();
@@ -197,11 +207,11 @@ async function beginPlay(fresh) {
     P.useMic = true; setTapMode(false); setText($('status'), 'おとを きいているよ');
   } catch (err) {
     if (!P || P.id !== id) return;
-    P.useMic = false; setTapMode(true);
+    P.useMic = false; setTapMode(true); P.starting = false;
     const denied = ['NotAllowedError', 'PermissionDeniedError'].includes(err.name);
     setText($('status'), denied ? 'マイクが つかえません。「できた！」を おして すすもう' : 'マイクなしで つづけます。「できた！」を おして すすもう');
   }
-  P.running = true; P.tracker.reset(); loop();
+  P.starting = false; P.running = true; P.tracker.reset(); loop();
 }
 function setTapMode(on) { $('doneBtn').hidden = !on; $('meterWrap').hidden = on; }
 
@@ -317,7 +327,7 @@ function pausePlay(msg = 'ひとやすみ') {
   else P.session.resumeNote();
 }
 $('pauseBtn').addEventListener('click', () => {
-  if (!P) return;
+  if (!P || P.starting) return;
   if (P.running) pausePlay(); else { P.rearm = new Rearm(); beginPlay(false); }
 });
 $('refBtn').addEventListener('click', refTone);
@@ -333,7 +343,7 @@ function stopAll() {
   ticket++;
   if (P) { P.running = false; cancelAnimationFrame(P.raf); }
   if (L) { cancelAnimationFrame(L.raf); L.voices.forEach(v => v.stop()); L = null; }
-  sound.stopAll(); closeMic(); P = null;
+  sound.stopAll(); closeMic(); P = null; clearTimeout(stickerTimer); releaseScreen();
 }
 
 function finishScreen({stars, detail, key, kindArt}) {
@@ -349,7 +359,7 @@ function finishScreen({stars, detail, key, kindArt}) {
   } else ns.hidden = true;
   setText($('finDetail'), `${detail}　シール ${store.stickerCount(S)}/${store.stickerTotal()}`);
   show('finish');
-  const d = sound.fanfare(); if (r.isNew) setTimeout(() => sound.sticker(), 900);
+  sound.fanfare(); releaseScreen(); clearTimeout(stickerTimer); if (r.isNew) stickerTimer = setTimeout(() => sound.sticker(), 900);
   confetti(true);
   $('finTitle').focus({preventScroll: true});
 }
@@ -368,7 +378,7 @@ $('toHome').addEventListener('click', () => { renderHome(); show('home'); });
 
 // ---------- のばす（ロングトーン）----------
 function startLong() {
-  stopAll();
+  stopAll(); holdScreen();
   const home = stringById(PK.home), timeline = buildTimeline({seconds: S.seconds, trips: S.trips});
   L = {timeline, home, startAt: 0, raf: 0, lastPhase: '', lastCount: null, voices: [], guide: S.guide, lastKind: ''};
   $('long').dataset.c = home.color;
@@ -450,6 +460,7 @@ function renderAlbum() {
 
 // ---------- 画面を離れたら止める ----------
 document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && (P || L)) holdScreen();
   if (TEST || !document.hidden) return;
   if (P && P.running) pausePlay('ひとやすみ');
   if (L) { stopAll(); renderPick(); show('pick'); }
