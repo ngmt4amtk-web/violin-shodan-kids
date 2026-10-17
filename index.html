@@ -1,4 +1,112 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>バイオリン初段 幼稚園生版</title>
-<style>body{font-family:ui-rounded,"Hiragino Maru Gothic ProN",sans-serif;background:#fff8ec;color:#243751;display:grid;place-items:center;min-height:100svh;margin:0;text-align:center}h1{font-size:1.4rem}p{color:#667287}</style></head>
-<body><main><h1>バイオリン初段 幼稚園生版</h1><p>じゅんびちゅう…</p></main></body></html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff3d6">
+<meta name="description" content="バイオリン初段の幼稚園生版。のばす・メリーさん・きらきらぼし・ゆびたいそう。">
+<title>バイオリン初段 幼稚園生版</title>
+<link rel="stylesheet" href="./style.css?v=20261017a">
+<link rel="stylesheet" href="./characters.css?v=20261017a">
+<script type="module" src="./app.js?v=20261017a"></script>
+</head>
+<body>
+<div id="confetti" aria-hidden="true"></div>
+<main class="app">
+
+<section id="home" aria-labelledby="homeTitle">
+  <header class="top">
+    <h1 id="homeTitle">バイオリン初段 <small>幼稚園生版</small></h1>
+    <button id="gear" class="icon" type="button" aria-label="せんせいの せってい">⚙</button>
+  </header>
+  <div class="hero">
+    <div id="heroBuddy" class="companion" aria-hidden="true"></div>
+    <p id="greet" class="bubble">いっしょに ひこう！</p>
+  </div>
+  <div id="buddies" class="buddies" role="group" aria-label="ともだちをえらぶ"></div>
+  <div class="menu">
+    <button class="tile" type="button" data-go="long"><img src="./assets/stickers/sneaker.webp" alt=""><b>のばす</b><small>ロングトーン</small></button>
+    <button class="tile" type="button" data-go="mary"><img src="./assets/stickers/lamb.webp" alt=""><b>メリーさん</b><small>ひつじ</small></button>
+    <button class="tile" type="button" data-go="twinkle"><img src="./assets/stickers/star.webp" alt=""><b>きらきらぼし</b><small>&nbsp;</small></button>
+    <button class="tile" type="button" data-go="fingers"><img src="./assets/stickers/violin.webp" alt=""><b>ゆびたいそう</b><small>0 1 2 3</small></button>
+  </div>
+  <button id="albumBtn" class="btn wide album-btn" type="button"><img src="./assets/props/medal.webp" alt=""><span>シールちょう</span><b id="albumCount">0/15</b></button>
+  <details id="settings" class="settings"><summary>せんせいの せってい</summary>
+    <div class="set-body">
+      <label class="field">なまえ（この端末のなかだけに保存）<input id="nameInput" type="text" maxlength="20" autocomplete="off" placeholder="例: ◯◯ちゃん"></label>
+      <div class="field"><span>判定のきびしさ（ゆびいろと同じ3段階）</span><div class="seg" data-key="tol"><button type="button" data-val="loose">とてもゆるい</button><button type="button" data-val="mid">ゆるい</button><button type="button" data-val="tight">ふつう</button></div></div>
+      <div class="field"><span>マイクの拾い率（小さな音でも拾うには「超高め」）</span><div class="seg" data-key="pickup"><button type="button" data-val="normal">ふつう</button><button type="button" data-val="high">高め</button><button type="button" data-val="ultra">超高め</button></div></div>
+      <div class="field"><span>基準の音 A =</span><div class="seg" data-key="a4"><button type="button" data-val="440">440</button><button type="button" data-val="441">441</button><button type="button" data-val="442">442</button><button type="button" data-val="443">443</button></div></div>
+      <div class="field"><span>マイクで判定する（「つかわない」ときは「できた！」を押して進む）</span><div class="seg" data-key="mic"><button type="button" data-val="1">つかう</button><button type="button" data-val="0">つかわない</button></div></div>
+      <div class="field"><span>外したあと、お手本の音を1回鳴らす</span><div class="seg" data-key="autoRef"><button type="button" data-val="1">なる</button><button type="button" data-val="0">ならさない</button></div></div>
+      <div class="field"><span>ロングトーンの1回の長さ</span><div class="seg" data-key="seconds"><button type="button" data-val="2">2びょう</button><button type="button" data-val="3">3びょう</button><button type="button" data-val="4">4びょう</button><button type="button" data-val="5">5びょう</button><button type="button" data-val="6">6びょう</button></div></div>
+      <div class="field"><span>ロングトーンのお手本の音</span><div class="seg" data-key="guide"><button type="button" data-val="1">なる</button><button type="button" data-val="0">ならさない</button></div></div>
+      <label class="field">お手本の音量 <output id="volOut">85%</output><input id="volume" type="range" min="20" max="100" step="5" value="85"></label>
+      <button id="resetBtn" class="btn small" type="button">シールを ぜんぶ けす</button>
+      <p class="note">マイクの音は端末の中だけで処理し、録音・保存・送信はしません。判定の仕組みは「ゆびいろ」と同じです（保持225ms・ゆれ幅・いちばん近い音・4本すべての弦を候補）。</p>
+    </div>
+  </details>
+</section>
+
+<section id="pick" hidden aria-labelledby="pickTitle">
+  <header class="top"><button id="pickBack" class="icon" type="button" aria-label="もどる">←</button><h2 id="pickTitle"></h2><span class="sp"></span></header>
+  <p class="q" id="homesQ">どの いろで ひく？</p>
+  <div id="homes" class="homes"></div>
+  <div id="partsWrap"><p class="q">どこまで ひく？</p><div id="parts" class="parts"></div></div>
+  <div id="tripsWrap" hidden><p class="q">なんかい いって かえる？</p><div id="trips" class="parts"></div></div>
+  <div id="preview" class="preview" aria-hidden="true"></div>
+  <button id="go" class="btn primary wide" type="button">はじめる</button>
+  <p id="pickNote" class="note" role="status"></p>
+</section>
+
+<section id="play" hidden aria-label="れんしゅう" data-c="red">
+  <header class="top"><button id="playBack" class="icon" type="button" aria-label="やめる">×</button><div class="pbar" aria-hidden="true"><i id="pfill"></i></div><span id="combo" class="combo" aria-live="polite"></span></header>
+  <div id="barStrip" class="bar-strip" aria-label="この小節の音"></div>
+  <div id="card" class="card">
+    <div id="strChip" class="chip"></div>
+    <div class="stage"><div id="finger" class="finger" aria-hidden="true">0</div><div id="companion" class="companion" aria-hidden="true"></div></div>
+    <div id="noteName" class="note-name" aria-hidden="true">ラ</div>
+    <svg id="relation" class="relation" viewBox="0 0 300 64" aria-hidden="true"></svg>
+    <div id="heard" class="heard" hidden role="status"></div>
+  </div>
+  <div id="reaction" class="reaction" role="status" aria-live="polite">ひいてみよう</div>
+  <div class="controls"><button id="refBtn" class="btn" type="button">おてほん</button><button id="pauseBtn" class="btn" type="button">やすむ</button><button id="nextBtn" class="btn" type="button">つぎ</button></div>
+  <button id="doneBtn" class="btn ok wide" type="button" hidden>できた！</button>
+  <div class="meter" id="meterWrap"><i id="meter"></i></div>
+  <p id="status" class="status" role="status"></p>
+</section>
+
+<section id="long" hidden aria-label="のばす れんしゅう" data-c="red">
+  <header class="top"><button id="longBack" class="icon" type="button" aria-label="やめる">×</button><div id="dirChip" class="dirchip">じゅんび</div><span class="sp"></span></header>
+  <div class="scene" id="scene">
+    <div id="count" class="count" aria-live="assertive"></div>
+    <img class="start-flag" src="./assets/props/startflag.webp" alt="">
+    <img class="goal-arch" src="./assets/props/arch.webp" alt="">
+    <div class="lane" id="lane"><div class="fill" id="fill"></div></div>
+    <div class="runner" id="runner" aria-hidden="true"><div class="bob"><div class="sprite" id="sprite"></div></div></div>
+  </div>
+  <div class="labels"><span>もと</span><span id="longMid"></span><span>さき</span></div>
+  <div class="bigbar" aria-hidden="true"><i id="bigfill"></i></div>
+  <div class="controls two"><button id="guideBtn" class="btn" type="button">おてほんの おと</button><button id="longStop" class="btn" type="button">やめる</button></div>
+</section>
+
+<section id="finish" hidden aria-labelledby="finTitle">
+  <p class="kicker">おめでとう！</p>
+  <h2 id="finTitle" tabindex="-1">ぜんぶ できた！</h2>
+  <div id="stars" class="stars" aria-hidden="true"></div>
+  <div class="fin-stage"><div id="finBuddy" class="companion" aria-hidden="true"></div></div>
+  <div id="newSticker" class="newsticker" hidden><img id="stickerImg" alt=""><b>シール ゲット！</b></div>
+  <p id="finDetail" class="fin-detail"></p>
+  <button id="again" class="btn primary wide" type="button">もういっかい</button>
+  <button id="other" class="btn wide" type="button">ほかの いろ</button>
+  <button id="toHome" class="btn wide" type="button">ホームへ</button>
+</section>
+
+<section id="album" hidden aria-labelledby="albumTitle">
+  <header class="top"><button id="albumBack" class="icon" type="button" aria-label="もどる">←</button><h2 id="albumTitle">シールちょう</h2><span class="sp"></span></header>
+  <div id="albumGrid" class="album-grid"></div>
+  <p id="albumNote" class="note"></p>
+</section>
+
+<noscript><p>このアプリを使うにはJavaScriptを有効にしてください。</p></noscript>
+</main>
+</body></html>
