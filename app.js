@@ -445,7 +445,7 @@ function renderAlbum() {
 
 // ---------- 画面を離れたら止める ----------
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) return;
+  if (TEST || !document.hidden) return;
   if (P && P.running) pausePlay('ひとやすみ');
   if (L) { stopAll(); renderPick(); show('pick'); }
 });
