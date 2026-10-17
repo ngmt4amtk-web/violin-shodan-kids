@@ -1,9 +1,9 @@
-import {STRINGS, stringById, SONGS, availableHomes, buildSong, candidatePool, fingerOffsets, gluedPairs, midiToHz, allEditions, noteFor} from './shapes.mjs?v=20261017b';
-import {TOL, PICKUP, detect, judgePitch, HoldTracker, Rearm} from './engine.mjs?v=20261017b';
-import {PlaySession} from './session.mjs?v=20261017b';
-import {buildTimeline, stateAt, toneWindows} from './longtone.mjs?v=20261017b';
-import {Sound} from './audio.mjs?v=20261017b';
-import * as store from './rewards.mjs?v=20261017b';
+import {STRINGS, stringById, SONGS, availableHomes, buildSong, candidatePool, fingerOffsets, gluedPairs, midiToHz, allEditions, noteFor} from './shapes.mjs?v=20261017c';
+import {TOL, PICKUP, detect, judgePitch, HoldTracker, Rearm} from './engine.mjs?v=20261017c';
+import {PlaySession} from './session.mjs?v=20261017c';
+import {buildTimeline, stateAt, toneWindows} from './longtone.mjs?v=20261017c';
+import {Sound} from './audio.mjs?v=20261017c';
+import * as store from './rewards.mjs?v=20261017c';
 
 const $ = id => document.getElementById(id);
 const qsa = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -147,21 +147,23 @@ async function openMic() {
   if (!navigator.mediaDevices?.getUserMedia) throw new Error('unsupported');
   const ctx = sound.ensure(); if (!ctx) throw new Error('unsupported');
   const stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, autoGainControl: false, noiseSuppression: false, channelCount: 1}, video: false});
-  if (ctx.state !== 'running') { try { await ctx.resume(); } catch {} }
-  const src = ctx.createMediaStreamSource(stream), hp = ctx.createBiquadFilter();
-  hp.type = 'highpass'; hp.frequency.value = 90; hp.Q.value = 0.707;
-  const an = ctx.createAnalyser(); an.fftSize = 4096; an.smoothingTimeConstant = 0;
-  const silent = ctx.createGain(); silent.gain.value = 0;
-  src.connect(hp); hp.connect(an); an.connect(silent); silent.connect(ctx.destination);
-  mic = {stream, src, hp, an, silent, buf: new Float32Array(an.fftSize)};
-  stream.getAudioTracks().forEach(t => { t.onended = () => { if (P?.running) pausePlay('マイクが とまったよ'); }; });
+  try {
+    if (ctx.state !== 'running') { try { await ctx.resume(); } catch {} }
+    const src = ctx.createMediaStreamSource(stream), hp = ctx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 90; hp.Q.value = 0.707;
+    const an = ctx.createAnalyser(); an.fftSize = 4096; an.smoothingTimeConstant = 0;
+    const silent = ctx.createGain(); silent.gain.value = 0;
+    src.connect(hp); hp.connect(an); an.connect(silent); silent.connect(ctx.destination);
+    return {stream, src, hp, an, silent, buf: new Float32Array(an.fftSize)};
+  } catch (err) { stream.getTracks().forEach(t => t.stop()); throw err; }   // つなぎ損ねたマイクを開きっぱなしにしない
 }
-function closeMic() {
-  if (!mic) return;
-  mic.stream.getTracks().forEach(t => { t.onended = null; t.stop(); });
-  for (const n of [mic.src, mic.hp, mic.an, mic.silent]) { try { n.disconnect(); } catch {} }
-  mic = null;
+// 開いたマイクは呼び出し側へ返す。許可待ちのあいだに画面を離れた場合も、その場で閉じられる
+function disposeMic(m) {
+  if (!m) return;
+  m.stream.getTracks().forEach(t => { t.onended = null; t.stop(); });
+  for (const n of [m.src, m.hp, m.an, m.silent]) { try { n.disconnect(); } catch {} }
 }
+function closeMic() { disposeMic(mic); mic = null; }
 function readPitch() {
   if (TEST) return testReading;
   if (!mic) return {f: -1, conf: 0, rms: 0};
@@ -187,8 +189,10 @@ async function beginPlay(fresh) {
   if (!S.mic) { P.useMic = false; setTapMode(true); P.running = true; loop(); return; }
   setText($('status'), 'マイクを じゅんびしています');
   try {
-    await openMic();
-    if (!P || P.id !== id) { closeMic(); return; }
+    const m = await openMic();
+    if (!P || P.id !== id) { disposeMic(m); return; }
+    closeMic(); mic = m;
+    m.stream.getAudioTracks().forEach(t => { t.onended = () => { if (P && P.running) pausePlay('マイクが とまったよ'); }; });
     P.useMic = true; setTapMode(false); setText($('status'), 'おとを きいているよ');
   } catch (err) {
     if (!P || P.id !== id) return;
