@@ -2,7 +2,7 @@
 // 「ゆびいろ」（~/Shortcuts/アプリ開発/yubi-iro/index.html）の TOL・detect・judge・保持ループを移植した。
 // 「いろとゆび」は ±150¢・オクターブ違いも正解・60ms で通すので緩すぎた。ここでは
 // ゆびいろの組み合わせをひとまとまりで使う: 保持時間 + ゆれ幅 + 最近傍候補 + 全4弦を候補にする。
-import {midiToHz} from './shapes.mjs?v=20261017c';
+import {midiToHz} from './shapes.mjs?v=20261017d';
 
 // 保持（hold）＝この長さ途切れず鳴らせたら判定する。spread＝窓のなかで許すゆれ（セント、85パーセンタイル）。
 // tol＝目標からこの幅以内なら無条件で正解。conf＝音程推定の確からしさの下限。
@@ -14,10 +14,12 @@ export const TOL = Object.freeze({
 export const DEFAULT_TOL = 'loose';
 
 // マイクの拾い率。音程の厳しさとは別。小さな音の子でも拾えるよう既定は「超高め」（2026-10-10 に本人が決めた値）。
+// 拾い率を上げるほど雑音も拾うので、音らしさ（minConf）の下限も段階ごとに足す（いろとゆびも同じ作り）。
+// 「ふつう」は ゆびいろ のまま（TOL の conf だけ）。
 export const PICKUP = Object.freeze({
-  normal: Object.freeze({label: 'ふつう',   minRms: 0.0035}),
-  high:   Object.freeze({label: '高め',     minRms: 0.0015}),
-  ultra:  Object.freeze({label: '超高め',   minRms: 0.0005})
+  normal: Object.freeze({label: 'ふつう',   minRms: 0.0035, minConf: 0}),
+  high:   Object.freeze({label: '高め',     minRms: 0.0015, minConf: 0.40}),
+  ultra:  Object.freeze({label: '超高め',   minRms: 0.0005, minConf: 0.45})
 });
 export const DEFAULT_PICKUP = 'ultra';
 
@@ -97,10 +99,10 @@ export function judgePitch(f, targetMidi, candidates, tolKey = DEFAULT_TOL, a4 =
 // ---- 保持ループ（ゆびいろの hold / held / lastVoiced）----
 // push() は解析1回ぶん。音が tol.hold ミリ秒つづいてゆれが小さければ commit に中央値の周波数を返す。
 export class HoldTracker {
-  constructor(tolKey = DEFAULT_TOL) { this.setTol(tolKey); this.reset(); }
+  constructor(tolKey = DEFAULT_TOL, minConf = 0) { this.setTol(tolKey); this.minConf = minConf; this.reset(); }
   setTol(tolKey) { this.cfg = TOL[tolKey] || TOL[DEFAULT_TOL]; }
   reset() { this.hold = []; this.lastVoiced = 0; this.progress = 0; }
-  isVoiced(reading) { return reading.f > 0 && reading.conf > this.cfg.conf; }
+  isVoiced(reading) { return reading.f > 0 && reading.conf > Math.max(this.cfg.conf, this.minConf); }
   push(now, reading) {
     const cfg = this.cfg;
     if (!this.isVoiced(reading)) {

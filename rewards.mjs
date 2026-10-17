@@ -1,7 +1,7 @@
 // 端末の中だけに残す設定と、ごほうびシールの記録。名前・成績を外へ送らない。
-import {allEditions} from './shapes.mjs?v=20261017c';
-import {TOL, DEFAULT_TOL, PICKUP, DEFAULT_PICKUP, A4_CHOICES, DEFAULT_A4} from './engine.mjs?v=20261017c';
-import {SECONDS_CHOICES, DEFAULT_SECONDS, TRIPS_CHOICES} from './longtone.mjs?v=20261017c';
+import {allEditions} from './shapes.mjs?v=20261017d';
+import {TOL, DEFAULT_TOL, PICKUP, DEFAULT_PICKUP, A4_CHOICES, DEFAULT_A4} from './engine.mjs?v=20261017d';
+import {SECONDS_CHOICES, DEFAULT_SECONDS, TRIPS_CHOICES} from './longtone.mjs?v=20261017d';
 
 // 初段の保存キー（violin-shodan-v1）とは別の頭にする。同じドメインに並ぶため。
 export const STORAGE_KEY = 'shodan-kids:v1';

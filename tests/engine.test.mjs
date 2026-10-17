@@ -137,3 +137,13 @@ test('Rearm: 無音が100ms続くか、高さが変わると、次の判定へ�
   const c = new Rearm(); c.disarm(0, 440, 1500);   // ビブラート程度（±30¢）では進まない
   for (let t = 0; t < 1000; t += 16.7) assert.equal(c.update(t, true, 440 * 2 ** ((Math.round(t / 16.7) % 2 ? 30 : -30) / 1200)), false);
 });
+
+test('拾い率: 超高めでも、音らしさの低い雑音（0.35）は音と数えない。バイオリンの音（0.9）は数える', () => {
+  const noise = {f: 300, conf: 0.35, rms: 0.01}, violin = {f: 440, conf: 0.9, rms: 0.01};
+  assert.equal(new HoldTracker('loose', PICKUP.ultra.minConf).isVoiced(noise), false);
+  assert.equal(new HoldTracker('loose', PICKUP.ultra.minConf).isVoiced(violin), true);
+  assert.equal(new HoldTracker('loose', PICKUP.normal.minConf).isVoiced(noise), true);   // ふつう＝ゆびいろ と同じ（conf 0.22 超えなら音）
+  // 雑音だけを1秒流しても、超高めでは確定しない
+  const t = new HoldTracker('loose', PICKUP.ultra.minConf);
+  assert.ok(runTracker(t, 300, {ms: 1000, conf: 0.35, rms: 0.01}).every(r => r.commit === null));
+});

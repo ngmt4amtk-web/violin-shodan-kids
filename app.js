@@ -1,9 +1,9 @@
-import {STRINGS, stringById, SONGS, availableHomes, buildSong, candidatePool, fingerOffsets, gluedPairs, midiToHz, allEditions, noteFor} from './shapes.mjs?v=20261017c';
-import {TOL, PICKUP, detect, judgePitch, HoldTracker, Rearm} from './engine.mjs?v=20261017c';
-import {PlaySession} from './session.mjs?v=20261017c';
-import {buildTimeline, stateAt, toneWindows} from './longtone.mjs?v=20261017c';
-import {Sound} from './audio.mjs?v=20261017c';
-import * as store from './rewards.mjs?v=20261017c';
+import {STRINGS, stringById, SONGS, availableHomes, buildSong, candidatePool, fingerOffsets, gluedPairs, midiToHz, allEditions, noteFor} from './shapes.mjs?v=20261017d';
+import {TOL, PICKUP, detect, judgePitch, HoldTracker, Rearm} from './engine.mjs?v=20261017d';
+import {PlaySession} from './session.mjs?v=20261017d';
+import {buildTimeline, stateAt, toneWindows} from './longtone.mjs?v=20261017d';
+import {Sound} from './audio.mjs?v=20261017d';
+import * as store from './rewards.mjs?v=20261017d';
 
 const $ = id => document.getElementById(id);
 const qsa = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -86,6 +86,7 @@ for (const seg of qsa('.seg')) seg.addEventListener('click', e => {
   const value = ['mic', 'autoRef', 'guide'].includes(key) ? raw === '1' : ['a4', 'seconds'].includes(key) ? Number(raw) : raw;
   S = store.normalize({...S, [key]: value}); persist(); syncSettings();
   if (P?.tracker && key === 'tol') P.tracker.setTol(S.tol);
+  if (P?.tracker && key === 'pickup') P.tracker.minConf = PICKUP[S.pickup].minConf;
 });
 $('nameInput').addEventListener('input', () => { S = {...S, name: $('nameInput').value.slice(0, 20)}; persist(); setText($('greet'), S.name ? `${S.name}、いっしょに ひこう！` : 'いっしょに ひこう！'); });
 $('volume').addEventListener('input', () => { S = {...S, volume: Number($('volume').value)}; sound.setVolume(S.volume / 100); setText($('volOut'), `${S.volume}%`); persist(); });
@@ -176,7 +177,7 @@ const stageOf = n => Math.min(4, n.pos % 4 + 1);
 function startSong() {
   stopAll();
   const song = buildSong(PK.songId, PK.home, PK.part);
-  P = {song, session: new PlaySession(song), tracker: new HoldTracker(S.tol), rearm: new Rearm(), running: false, useMic: false, mutedUntil: 0, raf: 0, id: ++ticket, lastF: 440};
+  P = {song, session: new PlaySession(song), tracker: new HoldTracker(S.tol, PICKUP[S.pickup].minConf), rearm: new Rearm(), running: false, useMic: false, mutedUntil: 0, raf: 0, id: ++ticket, lastF: 440};
   show('play');
   renderNote();
   beginPlay(true);
