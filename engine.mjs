@@ -2,7 +2,7 @@
 // 「ゆびいろ」（~/Shortcuts/アプリ開発/yubi-iro/index.html）の TOL・detect・judge・保持ループを移植した。
 // 「いろとゆび」は ±150¢・オクターブ違いも正解・60ms で通すので緩すぎた。ここでは
 // ゆびいろの組み合わせをひとまとまりで使う: 保持時間 + ゆれ幅 + 最近傍候補 + 全4弦を候補にする。
-import {midiToHz} from './shapes.mjs?v=20261017a';
+import {midiToHz} from './shapes.mjs?v=20261017b';
 
 // 保持（hold）＝この長さ途切れず鳴らせたら判定する。spread＝窓のなかで許すゆれ（セント、85パーセンタイル）。
 // tol＝目標からこの幅以内なら無条件で正解。conf＝音程推定の確からしさの下限。

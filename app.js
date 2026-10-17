@@ -1,9 +1,9 @@
-import {STRINGS, stringById, SONGS, availableHomes, buildSong, candidatePool, fingerOffsets, gluedPairs, midiToHz, allEditions, noteFor} from './shapes.mjs?v=20261017a';
-import {TOL, PICKUP, detect, judgePitch, HoldTracker, Rearm} from './engine.mjs?v=20261017a';
-import {PlaySession} from './session.mjs?v=20261017a';
-import {buildTimeline, stateAt, toneWindows} from './longtone.mjs?v=20261017a';
-import {Sound} from './audio.mjs?v=20261017a';
-import * as store from './rewards.mjs?v=20261017a';
+import {STRINGS, stringById, SONGS, availableHomes, buildSong, candidatePool, fingerOffsets, gluedPairs, midiToHz, allEditions, noteFor} from './shapes.mjs?v=20261017b';
+import {TOL, PICKUP, detect, judgePitch, HoldTracker, Rearm} from './engine.mjs?v=20261017b';
+import {PlaySession} from './session.mjs?v=20261017b';
+import {buildTimeline, stateAt, toneWindows} from './longtone.mjs?v=20261017b';
+import {Sound} from './audio.mjs?v=20261017b';
+import * as store from './rewards.mjs?v=20261017b';
 
 const $ = id => document.getElementById(id);
 const qsa = (sel, root = document) => [...root.querySelectorAll(sel)];
